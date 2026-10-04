@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trò Chơi Bắt Thỏ - Giá Cả Thị Trường</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            font-family: 'Nunito', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        h1, h2, h3, .font-heading {
+            font-family: 'Fredoka', cursive;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #10B981;
+            border-radius: 10px;
+        }
+
+        /* Animations */
+        @keyframes bounce-gentle {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        .animate-bounce-gentle {
+            animation: bounce-gentle 2s infinite ease-in-out;
+        }
+
+        @keyframes hop {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-18px) scale(1.05, 0.95); }
+        }
+        .animate-hop {
+            animation: hop 0.8s infinite ease-in-out;
+        }
+
+        @keyframes pop-in {
+            0% { transform: scale(0.5); opacity: 0; }
+            80% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-pop {
+            animation: pop-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes float-up {
+            0% { transform: translateY(0) scale(0.8); opacity: 1; }
+            100% { transform: translateY(-60px) scale(1.2); opacity: 0; }
+        }
+        .floating-badge {
+            position: absolute;
+            animation: float-up 1.2s ease-out forwards;
+            pointer-events: none;
+        }
+
+        /* Background */
+        .bg-meadow {
+            background: linear-gradient(180deg, #6EE7B7 0%, #3B82F6 0%, #93C5FD 35%, #A7F3D0 35%, #34D399 100%);
+        }
+
+        /* Glassmorphism panel */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(12px);
+            border: 4px solid #FDE047;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        /* Custom buttons */
+        .btn-game {
+            transition: all 0.15s ease;
+            box-shadow: 0 6px 0 #047857;
+        }
+        .btn-game:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 0 #047857;
+        }
+        .btn-game:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #047857;
+        }
+
+        .btn-orange {
+            box-shadow: 0 6px 0 #C2410C;
+        }
+        .btn-orange:hover { box-shadow: 0 8px 0 #C2410C; }
+        .btn-orange:active { box-shadow: 0 2px 0 #C2410C; }
+
+        .btn-option {
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 0 #CBD5E1;
+        }
+        .btn-option:hover {
+            transform: scale(1.02);
+            border-color: #3B82F6;
+            background-color: #EFF6FF;
+        }
+        .btn-option:active {
+            transform: scale(0.98);
+        }
+
+        /* Confetti Canvas */
+        #canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 50;
+        }
+    </style>
+</head>
+<body class="bg-meadow min-h-screen flex items-center justify-center p-2 sm:p-4 overflow-x-hidden relative">
+
+    <canvas id="canvas-container"></canvas>
+
+    <div class="w-full max-w-3xl min-h-[580px] glass-panel rounded-3xl p-4 sm:p-8 relative flex flex-col justify-between overflow-hidden my-auto">
+        
+        <div class="absolute -top-10 -left-10 w-32 h-32 bg-yellow-200 rounded-full blur-2xl opacity-60 pointer-events-none"></div>
+        <div class="absolute -bottom-10 -right-10 w-40 h-40 bg-green-300 rounded-full blur-2xl opacity-60 pointer-events-none"></div>
+
+        <!-- MÀN HÌNH BẮT ĐẦU -->
+        <div id="screen-start" class="flex flex-col items-center justify-between h-full space-y-6 my-auto animate-pop">
+            <div class="text-center space-y-2">
+                <div class="inline-flex items-center gap-2 bg-yellow-300 text-yellow-900 px-4 py-1.5 rounded-full text-sm font-bold shadow-sm">
+                    <i class="fa-solid fa-gamepad"></i> Trò Chơi Thuyết Trình
+                </div>
+                <h1 class="text-3xl sm:text-5xl font-black text-emerald-800 drop-shadow-md tracking-wide">
+                    🐰 BẮT THỎ CỦNG CỐ 🥕
+                </h1>
+                <p class="text-emerald-700 font-semibold text-sm sm:text-base">Chủ đề: Giá Cả Thị Trường & Giá Cả Hàng Hóa</p>
+            </div>
+
+            <div class="relative py-2">
+                <div class="text-7xl sm:text-8xl animate-hop filter drop-shadow-lg cursor-pointer transform hover:scale-110 transition-transform" onclick="playSound('hop')">
+                    🐰
+                </div>
+                <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 w-20 h-4 bg-black/10 rounded-full blur-xs"></div>
+            </div>
+
+            <div class="w-full max-w-md bg-emerald-50/80 p-5 rounded-2xl border-2 border-emerald-200 space-y-4 shadow-inner">
+                <div>
+                    <label class="block text-emerald-900 font-bold mb-1 text-sm"><i class="fa-solid fa-user-astronaut text-emerald-600 mr-1"></i> Tên Tên Người Chơi / Nhóm:</label>
+                    <input type="text" id="player-name" placeholder="Nhập tên của bạn..." class="w-full px-4 py-2.5 rounded-xl border-2 border-emerald-300 focus:outline-none focus:border-emerald-500 font-bold text-gray-700 bg-white shadow-sm">
+                </div>
+            </div>
+
+            <button onclick="startGame()" class="btn-game bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xl px-10 py-3.5 rounded-2xl w-full max-w-md flex items-center justify-center gap-3 tracking-wider">
+                <i class="fa-solid fa-play"></i> BẮT ĐẦU CHƠI NGAY
+            </button>
+        </div>
+
+        <!-- MÀN HÌNH CHƠI GAME -->
+        <div id="screen-game" class="hidden flex-col h-full justify-between space-y-4">
+            
+            <div class="flex items-center justify-between bg-emerald-100/90 p-3 rounded-2xl border-2 border-emerald-300 shadow-sm">
+                <div class="flex items-center gap-2">
+                    <span class="bg-emerald-600 text-white font-bold px-3 py-1 rounded-xl text-xs sm:text-sm" id="question-progress-badge">Câu 1/6</span>
+                    <div class="w-24 sm:w-36 bg-emerald-200 h-3 rounded-full overflow-hidden border border-emerald-300">
+                        <div id="progress-bar-fill" class="bg-emerald-500 h-full w-0 transition-all duration-300"></div>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 bg-amber-100 border-2 border-amber-300 px-3.5 py-1 rounded-xl shadow-xs">
+                    <span class="text-xl sm:text-2xl">🧺</span>
+                    <span class="font-black text-amber-800 text-base sm:text-lg" id="score-text">0 Thỏ</span>
+                </div>
+            </div>
+
+            <div class="flex-1 flex flex-col justify-center items-center space-y-4 relative my-2">
+                
+                <div id="bunny-container" class="relative text-center py-2">
+                    <div id="bunny-sprite" class="text-6xl sm:text-7xl animate-bounce-gentle inline-block filter drop-shadow-md cursor-pointer transition-all duration-300">
+                        🐰
+                    </div>
+                    <div id="feedback-floating" class="absolute inset-0 flex items-center justify-center pointer-events-none"></div>
+                </div>
+
+                <div class="w-full bg-white p-4 sm:p-6 rounded-2xl border-2 border-amber-300 shadow-md text-center space-y-2">
+                    <span class="text-xs font-bold uppercase tracking-wider text-amber-600" id="question-category">BÀI TẬP CỦNG CỐ</span>
+                    <h2 id="question-text" class="text-lg sm:text-2xl font-bold text-gray-800 min-h-[60px] flex items-center justify-center leading-snug">
+                        Đang tải câu hỏi...
+                    </h2>
+                </div>
+
+                <div id="options-grid" class="w-full grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
+                </div>
+            </div>
+
+            <div id="explanation-bar" class="hidden bg-blue-50 border-2 border-blue-200 p-3 rounded-xl flex items-center justify-between gap-2 animate-pop">
+                <div class="flex items-center gap-2 overflow-hidden">
+                    <i class="fa-solid fa-circle-info text-blue-500 text-xl flex-shrink-0"></i>
+                    <p id="explanation-text" class="text-xs sm:text-sm text-blue-900 font-semibold">Giải thích đáp án...</p>
+                </div>
+                <button onclick="nextQuestion()" class="btn-game bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-xl text-sm flex-shrink-0 flex items-center gap-1">
+                    Tiếp Theo <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- MÀN HÌNH TỔNG KẾT -->
+        <div id="screen-result" class="hidden flex-col items-center justify-between h-full space-y-5 my-auto animate-pop text-center">
+            <div class="space-y-1">
+                <div class="inline-block bg-yellow-300 text-yellow-900 font-black px-4 py-1 rounded-full text-xs uppercase tracking-wider">
+                    🎉 BẢNG TỔNG KẾT BẮT THỎ 🎉
+                </div>
+                <h1 id="result-player-name" class="text-2xl sm:text-3xl font-black text-emerald-800">Chúc mừng Bạn!</h1>
+            </div>
+
+            <div class="w-full bg-emerald-50/90 border-2 border-emerald-300 rounded-2xl p-5 shadow-inner flex flex-col items-center space-y-3">
+                <div id="result-badge-icon" class="text-6xl sm:text-7xl animate-bounce">
+                    🏆
+                </div>
+                
+                <div>
+                    <div class="text-sm font-bold text-gray-500 uppercase">Thành tích của bạn</div>
+                    <div class="text-3xl sm:text-4xl font-black text-amber-600 my-1" id="final-score-text">
+                        0 / 6 Chú Thỏ 🧺
+                    </div>
+                    <div id="rank-title" class="inline-block bg-emerald-600 text-white font-bold px-4 py-1.5 rounded-xl text-sm sm:text-base shadow-sm">
+                        Chuyên Gia Kinh Tế
+                    </div>
+                </div>
+
+                <p id="result-comment" class="text-xs sm:text-sm text-emerald-800 font-semibold max-w-md">
+                    Bạn đã xuất sắc hoàn thành bài củng cố kiến thức!
+                </p>
+            </div>
+
+            <div class="w-full max-h-40 overflow-y-auto bg-white rounded-xl border border-gray-200 p-3 text-left space-y-2 shadow-inner" id="review-list">
+            </div>
+
+            <div class="w-full flex flex-col sm:flex-row gap-3 pt-2">
+                <button onclick="restartGame()" class="btn-game bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-lg py-3 rounded-xl flex-1 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-rotate-right"></i> Chơi Lại
+                </button>
+                <button onclick="showStartScreen()" class="btn-orange bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg py-3 rounded-xl flex-1 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-house"></i> Màn Hình Chính
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const QUESTIONS = [
+            {
+                question: "1. Giá cả thị trường do chỉ người bán đặt ra.",
+                options: ["Đúng", "Sai"],
+                answer: 1,
+                explanation: "Sai: Giá cả thị trường do người bán và người mua thỏa thuận theo quy luật cung - cầu."
+            },
+            {
+                question: "2. Giá cả hàng hóa tính dựa trên chi phí sản xuất.",
+                options: ["Đúng", "Sai"],
+                answer: 0,
+                explanation: "Đúng: Giá cả hàng hóa thường dựa vào chi phí sản xuất cộng với lợi nhuận."
+            },
+            {
+                question: "3. Mua nhiêu luôn được giá cao hơn.",
+                options: ["Đúng", "Sai"],
+                answer: 1,
+                explanation: "Sai: Mua số lượng nhiều thường được chiết khấu hoặc giá sỉ tốt hơn."
+            },
+            {
+                question: "4. Giá cả thị trường là giá sau khi thỏa thuận.",
+                options: ["Đúng", "Sai"],
+                answer: 0,
+                explanation: "Đúng: Giá thị trường thể hiện sự thống nhất giữa bên bán và bên mua."
+            },
+            {
+                question: "5. Giá cả hàng hóa thay đổi liên tục như giá thị trường.",
+                options: ["Đúng", "Sai"],
+                answer: 1,
+                explanation: "Sai: Giá cả hàng hóa ổn định hơn, còn giá thị trường biến động liên tục."
+            },
+            {
+                question: "6. Giá cả thị trường khác giá cả hàng hóa như thế nào?",
+                options: [
+                    "Giá cả hàng hóa tính theo chi phí; giá cả thị trường do thỏa thuận và cung cầu quyết định",
+                    "Cả hai giống hệt nhau không có điểm khác biệt",
+                    "Giá cả thị trường luôn thấp hơn giá cả hàng hóa",
+                    "Giá cả hàng hóa do người mua tự quyết định hoàn toàn"
+                ],
+                answer: 0,
+                explanation: "Chính xác: Giá cả hàng hóa dựa trên chi phí, còn giá thị trường biến động theo cung cầu thỏa thuận!"
+            }
+        ];
+
+        let state = {
+            playerName: "Người chơi",
+            currentIndex: 0,
+            score: 0,
+            userAnswers: [],
+            isAnswered: false
+        };
+
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) audioCtx = new AudioContext();
+        }
+
+        function playSound(type) {
+            try {
+                initAudio();
+                if (!audioCtx) return;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                const now = audioCtx.currentTime;
+
+                if (type === 'correct') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(523.25, now);
+                    osc.frequency.setValueAtTime(659.25, now + 0.1);
+                    osc.frequency.setValueAtTime(783.99, now + 0.2);
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+                    osc.start(now);
+                    osc.stop(now + 0.4);
+                } else if (type === 'wrong') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(220, now);
+                    osc.frequency.setValueAtTime(180, now + 0.15);
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+                    osc.start(now);
+                    osc.stop(now + 0.35);
+                } else if (type === 'hop') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(300, now);
+                    osc.frequency.exponentialRampToValueAtTime(600, now + 0.1);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+                    osc.start(now);
+                    osc.stop(now + 0.12);
+                }
+            } catch (e) {}
+        }
+
+        function showScreen(screenId) {
+            document.getElementById('screen-start').classList.add('hidden');
+            document.getElementById('screen-game').classList.add('hidden');
+            document.getElementById('screen-result').classList.add('hidden');
+
+            document.getElementById('screen-start').classList.remove('flex');
+            document.getElementById('screen-game').classList.remove('flex');
+            document.getElementById('screen-result').classList.remove('flex');
+
+            const target = document.getElementById(screenId);
+            target.classList.remove('hidden');
+            target.classList.add('flex');
+        }
+
+        function showStartScreen() {
+            showScreen('screen-start');
+        }
+
+        function startGame() {
+            const nameInput = document.getElementById('player-name').value.trim();
+            state.playerName = nameInput !== "" ? nameInput : "Bạn Học";
+            state.currentIndex = 0;
+            state.score = 0;
+            state.userAnswers = [];
+            state.isAnswered = false;
+
+            showScreen('screen-game');
+            renderQuestion();
+        }
+
+        function renderQuestion() {
+            state.isAnswered = false;
+            const q = QUESTIONS[state.currentIndex];
+            const total = QUESTIONS.length;
+
+            document.getElementById('question-progress-badge').innerText = `Câu ${state.currentIndex + 1}/${total}`;
+            document.getElementById('progress-bar-fill').style.width = `${((state.currentIndex) / total) * 100}%`;
+            document.getElementById('score-text').innerText = `${state.score} Thỏ`;
+
+            const bunnySprite = document.getElementById('bunny-sprite');
+            bunnySprite.innerText = '🐰';
+            bunnySprite.className = 'text-6xl sm:text-7xl animate-bounce-gentle inline-block filter drop-shadow-md cursor-pointer transition-all duration-300';
+
+            document.getElementById('explanation-bar').classList.add('hidden');
+            document.getElementById('question-text').innerText = q.question;
+
+            const optionsGrid = document.getElementById('options-grid');
+            optionsGrid.innerHTML = '';
+
+            if (q.options.length === 2) {
+                optionsGrid.className = 'w-full grid grid-cols-2 gap-4';
+            } else {
+                optionsGrid.className = 'w-full grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3';
+            }
+
+            q.options.forEach((optText, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-option w-full bg-white border-2 border-gray-200 rounded-xl p-3.5 text-left font-bold text-gray-700 text-sm sm:text-base flex items-center justify-between shadow-sm';
+                btn.onclick = () => handleAnswer(index, btn);
+
+                const optionLetters = ['A', 'B', 'C', 'D'];
+                btn.innerHTML = `
+                    <div class="flex items-center gap-2.5">
+                        <span class="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center font-black text-xs flex-shrink-0">${optionLetters[index] || index+1}</span>
+                        <span>${optText}</span>
+                    </div>
+                    <i class="fa-regular fa-circle text-gray-300 option-icon"></i>
+                `;
+                optionsGrid.appendChild(btn);
+            });
+        }
+
+        function handleAnswer(selectedIndex, selectedBtn) {
+            if (state.isAnswered) return;
+            state.isAnswered = true;
+
+            const q = QUESTIONS[state.currentIndex];
+            const isCorrect = (selectedIndex === q.answer);
+
+            state.userAnswers.push({
+                question: q.question,
+                selected: selectedIndex,
+                correct: q.answer,
+                isCorrect: isCorrect,
+                explanation: q.explanation
+            });
+
+            const allButtons = document.querySelectorAll('#options-grid button');
+            const bunnySprite = document.getElementById('bunny-sprite');
+
+            if (isCorrect) {
+                playSound('correct');
+                state.score += 1;
+                document.getElementById('score-text').innerText = `${state.score} Thỏ`;
+
+                selectedBtn.classList.remove('bg-white', 'border-gray-200');
+                selectedBtn.classList.add('bg-emerald-500', 'border-emerald-600', 'text-white');
+                selectedBtn.querySelector('.option-icon').className = 'fa-solid fa-circle-check text-white';
+
+                bunnySprite.innerText = '🧺🐰✨';
+                bunnySprite.classList.add('scale-125');
+
+                showFloatingBadge('+1 Thỏ! 🥕', 'text-emerald-600 font-black text-2xl');
+                triggerConfettiBurst();
+            } else {
+                playSound('wrong');
+
+                selectedBtn.classList.remove('bg-white', 'border-gray-200');
+                selectedBtn.classList.add('bg-red-500', 'border-red-600', 'text-white');
+                selectedBtn.querySelector('.option-icon').className = 'fa-solid fa-circle-xmark text-white';
+
+                if (allButtons[q.answer]) {
+                    allButtons[q.answer].classList.remove('bg-white', 'border-gray-200');
+                    allButtons[q.answer].classList.add('bg-emerald-100', 'border-emerald-400', 'text-emerald-900');
+                }
+
+                bunnySprite.innerText = '🐰💧';
+                showFloatingBadge('Chưa đúng rồi! 0 Thỏ', 'text-red-500 font-bold text-lg');
+            }
+
+            allButtons.forEach(btn => btn.style.pointerEvents = 'none');
+
+            const expBar = document.getElementById('explanation-bar');
+            document.getElementById('explanation-text').innerText = q.explanation;
+            expBar.classList.remove('hidden');
+        }
+
+        function showFloatingBadge(text, customClasses) {
+            const container = document.getElementById('feedback-floating');
+            const badge = document.createElement('div');
+            badge.className = `floating-badge ${customClasses} filter drop-shadow-md bg-white/90 px-3 py-1 rounded-full border border-gray-200`;
+            badge.innerText = text;
+            container.appendChild(badge);
+
+            setTimeout(() => badge.remove(), 1200);
+        }
+
+        function nextQuestion() {
+            state.currentIndex += 1;
+            if (state.currentIndex < QUESTIONS.length) {
+                renderQuestion();
+            } else {
+                finishGame();
+            }
+        }
+
+        function finishGame() {
+            showScreen('screen-result');
+
+            const total = QUESTIONS.length;
+            const score = state.score;
+            const percentage = Math.round((score / total) * 100);
+
+            document.getElementById('result-player-name').innerText = `Chúc mừng ${state.playerName}!`;
+            document.getElementById('final-score-text').innerText = `${score} / ${total} Chú Thỏ 🧺`;
+
+            let badgeIcon = '🏆';
+            let rankTitle = 'Chuyên Gia Thị Trường';
+            let comment = 'Xuất sắc! Bạn nắm rất vững kiến thức về Giá cả thị trường!';
+
+            if (percentage === 100) {
+                badgeIcon = '👑';
+                rankTitle = 'Vua Bắt Thỏ Vĩ Đại';
+                comment = 'Hoàn hảo! Bạn bắt trọn 6 chú thỏ và trả lời đúng tất cả các câu hỏi!';
+                triggerConfettiBurst(50);
+            } else if (percentage >= 70) {
+                badgeIcon = '🏆';
+                rankTitle = 'Thợ Săn Thỏ Cừ Khôi';
+                comment = 'Rất tốt! Bạn hiểu rất rõ về cơ chế giá cả thị trường.';
+            } else {
+                badgeIcon = '🌱';
+                rankTitle = 'Tập Sự Kinh Tế';
+                comment = 'Hãy xem lại phần giải thích để hiểu rõ hơn về giá cả thị trường nhé!';
+            }
+
+            document.getElementById('result-badge-icon').innerText = badgeIcon;
+            document.getElementById('rank-title').innerText = rankTitle;
+            document.getElementById('result-comment').innerText = comment;
+
+            const reviewList = document.getElementById('review-list');
+            reviewList.innerHTML = '<h4 class="font-bold text-gray-700 text-xs uppercase mb-2">Chi tiết đáp án:</h4>';
+
+            state.userAnswers.forEach((ans, idx) => {
+                const item = document.createElement('div');
+                item.className = `p-2.5 rounded-lg border text-xs ${ans.isCorrect ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'}`;
+                item.innerHTML = `
+                    <div class="flex items-start gap-1.5">
+                        <span class="${ans.isCorrect ? 'text-emerald-600' : 'text-red-500'} font-bold">${ans.isCorrect ? '✓' : '✗'}</span>
+                        <div>
+                            <p class="font-bold text-gray-800">${ans.question}</p>
+                            <p class="text-gray-600 mt-0.5">Bạn chọn: <span class="font-semibold">${QUESTIONS[idx].options[ans.selected]}</span></p>
+                            ${!ans.isCorrect ? `<p class="text-emerald-700 font-semibold">Đáp án đúng: ${QUESTIONS[idx].options[ans.correct]}</p>` : ''}
+                        </div>
+                    </div>
+                `;
+                reviewList.appendChild(item);
+            });
+        }
+
+        function restartGame() {
+            startGame();
+        }
+
+        /* Confetti Effect */
+        const canvas = document.getElementById('canvas-container');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        function triggerConfettiBurst(count = 25) {
+            const colors = ['#10B981', '#F59E0B', '#3B82F6', '#EC4899', '#8B5CF6'];
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+
+            for (let i = 0; i < count; i++) {
+                particles.push({
+                    x: centerX,
+                    y: centerY,
+                    vx: (Math.random() - 0.5) * 12,
+                    vy: (Math.random() - 0.8) * 12,
+                    size: Math.random() * 8 + 4,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    life: 1,
+                    decay: Math.random() * 0.02 + 0.015
+                });
+            }
+        }
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.2;
+                p.life -= p.decay;
+
+                if (p.life <= 0) {
+                    particles.splice(i, 1);
+                    continue;
+                }
+
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = p.life;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            requestAnimationFrame(animateParticles);
+        }
+
+        window.onload = function() {
+            animateParticles();
+        };
+    </script>
+</body>
+</html>
